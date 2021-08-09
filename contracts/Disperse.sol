@@ -13,15 +13,14 @@ interface IERC20 {
 
 contract Disperse {
     
-    function disperseEther(address[] recipients, uint256[] values) external payable {
+    function batch_transfer_ether(address[] recipients, uint256[] values) external payable {
         for (uint256 i = 0; i < recipients.length; i++)
             recipients[i].transfer(values[i]);
         uint256 balance = address(this).balance;
         if (balance > 0)
             msg.sender.transfer(balance);
     }
-    // 所以这两个有啥区别
-    function disperseToken(IERC20 token, address[] recipients, uint256[] values) external {
+    function batch_transfer(IERC20 token, address[] recipients, uint256[] values) external {
         uint256 total = 0;
         for (uint256 i = 0; i < recipients.length; i++)
             total += values[i];
@@ -29,9 +28,19 @@ contract Disperse {
         for (i = 0; i < recipients.length; i++)
             require(token.transfer(recipients[i], values[i]));
     }
-    // 此处真的不需要检查是否够用么？
-    function disperseTokenWithDifferentAmount(IERC20 token, address[] recipients, uint256[] values) external {
+    function batch_transfer_simple(IERC20 token, address[] recipients, uint256[] values) external {
         for (uint256 i = 0; i < recipients.length; i++)
             require(token.transferFrom(msg.sender, recipients[i], values[i]));
     }
-}
+    function batch_transfer_fixed_value(IERC20 token, address[] recipients,uint256 value) external {
+        uint256 total = 0;
+        total = value*recipients.length;
+        require(token.transferFrom(msg.sender, address(this), total));
+        for (uint256 i = 0; i < recipients.length; i++)
+            require(token.transfer(recipients[i], value));
+    }
+    function batch_transfer_fixed_value_simple(IERC20 token, address[] recipients, uint256 value) external {
+        for (uint256 i = 0; i < recipients.length; i++)
+            require(token.transferFrom(msg.sender, recipients[i], value));
+    }
+} 
